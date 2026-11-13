@@ -910,24 +910,31 @@ html, body {
 .scene__shade { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
 .gclock {
 	position: absolute; left: 0; right: 0; top: 150px; text-align: center; white-space: nowrap;
-	font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 300; font-size: 400px; line-height: 0.82; letter-spacing: -0.02em;
+	font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 300; font-size: 400px; line-height: 0.82; letter-spacing: -0.02em; font-kerning: none;
 	filter: drop-shadow(0 6px 28px rgba(0, 0, 0, 0.16));
 }
 .gclock__fill {
 	display: block; padding: 0.2em 0; margin: -0.2em 0; color: transparent;
 	-webkit-background-clip: text; background-clip: text; background-size: 100vw 100vh; background-repeat: no-repeat;
 }
-.gclock__rim { position: absolute; left: 0; top: 0; right: 0; bottom: 0; color: rgba(255, 255, 255, 0.1); -webkit-text-stroke: 1.44px rgba(255, 255, 255, 0.55); }
+.gclock__rim { position: absolute; left: 0; top: 0; right: 0; bottom: 0; color: rgba(255, 255, 255, 0.04); -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.22); }
+/* Liquid Glass light: a bright stroke per digit, kept only near each digit's top-left and bottom-right (no kerning, so the per-character spans line up with the text) */
+.gclock__spec { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.gclock__spec span {
+	display: inline-block; color: transparent; -webkit-text-stroke: 3px #fff;
+	-webkit-mask-image: linear-gradient(135deg, #000 0%, rgba(0, 0, 0, 0.55) 16%, transparent 34%, transparent 68%, rgba(0, 0, 0, 0.45) 86%, #000 100%);
+	mask-image: linear-gradient(135deg, #000 0%, rgba(0, 0, 0, 0.55) 16%, transparent 34%, transparent 68%, rgba(0, 0, 0, 0.45) 86%, #000 100%);
+}
 .gclock__sheen {
 	position: absolute; left: 0; top: 0; right: 0; bottom: 0; color: transparent; -webkit-background-clip: text; background-clip: text;
-	background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.22) 100%);
+	background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0.12) 100%);
 }
 /* after 9 pm everything dims a little */
 .scenes--late .scene__bg, .scenes--late .scene__fg, .scenes--late .gclock { filter: brightness(0.72); }
 /* Night: the clock behind the peak, pink glass */
 .scene--night .scene__bg, .scene--night .scene__fg { filter: brightness(0.86); }
-.scene--night .gclock__fill { filter: brightness(1.15) saturate(1.2); opacity: 0.9; }
-.scene--night .gclock__rim { color: rgba(255, 200, 215, 0.06); -webkit-text-stroke-color: rgba(255, 215, 225, 0.5); }
+.scene--night .gclock__fill { filter: brightness(1.18) saturate(1.3); opacity: 0.8; }   /* clear glass: the sky shows through */
+.scene--night .gclock__rim { color: rgba(255, 200, 215, 0.04); -webkit-text-stroke-color: rgba(255, 215, 225, 0.22); }
 /* Golden hour: a little smaller, low enough for the volcano's tip to rise into the digits */
 .scene--golden .gclock { top: 152px; font-size: 390px; }
 /* Waterline: the clock sits on the water; below the line it is a blurred reflection */
@@ -962,9 +969,10 @@ html, body {
 
 /* the dock: Couch's dark glass bar; the glass hugs the tiles when they all fit, a long row gets a full-width bar */
 .look-glass {
-	--dock-bg: rgba(30, 20, 28, 0.32);
-	--dock-blur: blur(28px) saturate(170%);
-	--dock-shadow: inset 0 0 0 1px rgba(255, 210, 220, 0.16), inset 0 1px 0 rgba(255, 220, 230, 0.14), 0 24px 60px rgba(0, 0, 0, 0.28);
+	--dock-bg: rgba(255, 255, 255, 0.08);
+	--dock-blur: blur(18px) saturate(185%) brightness(1.08);
+	--dock-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 24px 60px rgba(0, 0, 0, 0.3);
+	--dock-rim: linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.14) 82%, rgba(255, 255, 255, 0.6));
 }
 /* clip sideways only, so the floating name above the dock is not cut off (overflow: clip keeps the other axis visible) */
 .look-glass .row__viewport { overflow-x: clip; overflow-y: visible; }
@@ -972,6 +980,14 @@ html, body {
 	width: -webkit-max-content; width: max-content; margin: 0 auto; padding: 22px 28px; border-radius: 46px;
 	background: var(--dock-bg); -webkit-backdrop-filter: var(--dock-blur); backdrop-filter: var(--dock-blur); box-shadow: var(--dock-shadow);
 }
+/* the glass rim: a 2 px ring (the inside masked out) that catches the light at the top-left and bottom-right */
+.look-glass .row__track--centered { position: relative; }
+.look-glass .row__track--centered::after, .look-glass .row__viewport--scroll::after {
+	content: ''; position: absolute; left: 0; top: 0; right: 0; bottom: 0; border-radius: 46px; padding: 2px; pointer-events: none; background: var(--dock-rim);
+	-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+}
+/* a dock that fits needs no sideways clip, so the name above the last app is never cut */
+.look-glass .row__viewport:not(.row__viewport--scroll) { overflow: visible; }
 /* a border-radius on the clipping viewport makes webOS's Chromium 120 clip both axes, so the bar's glass is a ::before */
 .look-glass .row__viewport--scroll { position: relative; z-index: 0; padding: 22px 34px; margin: 0; }
 .look-glass .row__viewport--scroll::before {

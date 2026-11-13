@@ -75,6 +75,8 @@ function GlassClock ({text, scene, under}: {text: string; scene: SceneId; under?
 			<span class="gclock__fill" style={{backgroundImage: `url(scenes/scene-${scene}-glass.jpg)`}}>{text}</span>
 			<span class="gclock__sheen">{text}</span>
 			<span class="gclock__rim">{text}</span>
+			{/* macOS 27 glass: each digit catches light on its top-left and bottom-right edges (a masked stroke per character) */}
+			<span class="gclock__spec">{text.split('').map((ch, i) => <span key={i}>{ch}</span>)}</span>
 		</div>
 	);
 }
