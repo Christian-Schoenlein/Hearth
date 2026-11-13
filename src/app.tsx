@@ -284,6 +284,7 @@ export function App () {
 		});
 	}, [config.themeSel]);   // eslint-disable-line react-hooks/exhaustive-deps
 	const iconStyle = effectiveIconStyle(config.iconStyle, config.theme);          // Accent mono is not offered in OLED black
+	useEffect(() => { document.documentElement.classList.toggle('look-glass', config.glass); }, [config.glass]);   // fork: Glass look
 	useEffect(() => { document.documentElement.classList.toggle('look-minimal', config.minimal || iconStyle === 'glyph'); }, [config.minimal, iconStyle]);   // W1: Glyph uses Minimal's focus (larger only, no ring)
 	// Dark mono icons: the tile background and the shape colour come from the theme (OLED black: pure #000, pixels off)
 	useEffect(() => {
@@ -1094,8 +1095,8 @@ export function App () {
 
 	setMonoIcons(isMonoStyle(iconStyle));
 	const appearance: Appearance = useMemo(
-		() => ({iconScale: config.iconScale, iconOpacity: config.iconOpacity, labelColor: config.labelColor, labelFont: config.labelFont, labelSize: config.labelSize, labelWeight: config.labelWeight, scrollSpeed: config.scrollSpeed, iconGap: config.iconGap, tileShape: config.tileShape, iconStyle, quietSec: config.quietSec, quietDimSec: config.quietDimSec, quietDimLevel: config.quietDimLevel, quietPowerOff: config.quietPowerOff, oledShift: config.oledShift, sideMargin: config.sideMargin, bottomMargin: config.bottomMargin, favSideMargin: config.favSideMargin, favBottomMargin: config.favBottomMargin, showLabels: config.showLabels, rows: config.rows, clock: config.clock}),
-		[config.iconScale, config.iconOpacity, config.labelColor, config.labelFont, config.labelSize, config.labelWeight, config.scrollSpeed, config.iconGap, config.tileShape, iconStyle, config.quietSec, config.quietDimSec, config.quietPowerOff, config.quietDimLevel, config.oledShift, config.sideMargin, config.bottomMargin, config.favSideMargin, config.favBottomMargin, config.showLabels, config.rows, config.clock, config.theme]
+		() => ({iconScale: config.iconScale, iconOpacity: config.iconOpacity, labelColor: config.labelColor, labelFont: config.labelFont, labelSize: config.labelSize, labelWeight: config.labelWeight, scrollSpeed: config.scrollSpeed, iconGap: config.iconGap, tileShape: config.tileShape, iconStyle, quietSec: config.quietSec, quietDimSec: config.quietDimSec, quietDimLevel: config.quietDimLevel, quietPowerOff: config.quietPowerOff, oledShift: config.oledShift, sideMargin: config.sideMargin, bottomMargin: config.bottomMargin, favSideMargin: config.favSideMargin, favBottomMargin: config.favBottomMargin, showLabels: config.showLabels, glass: config.glass, rows: config.rows, clock: config.clock}),
+		[config.iconScale, config.iconOpacity, config.labelColor, config.labelFont, config.labelSize, config.labelWeight, config.scrollSpeed, config.iconGap, config.tileShape, iconStyle, config.quietSec, config.quietDimSec, config.quietPowerOff, config.quietDimLevel, config.oledShift, config.sideMargin, config.bottomMargin, config.favSideMargin, config.favBottomMargin, config.showLabels, config.glass, config.rows, config.clock, config.theme]
 	);
 
 	// ----- actions -----

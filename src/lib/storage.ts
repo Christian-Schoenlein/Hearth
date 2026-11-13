@@ -250,6 +250,8 @@ export interface UserConfig {
 	homeFocus: HomeFocus;
 	/** show each app's name under its icon on the home row */
 	showLabels: boolean;
+	/** fork: the Glass look (frosted-glass clock card, weather pill and app dock) */
+	glass: boolean;
 	/** minimalist look: no borders around icons or on the selected one; the selected icon is simply larger */
 	minimal: boolean;
 	/** the LG Home and System Settings tiles at the end of the row (Hearth's own Settings tile is always there) */
@@ -388,6 +390,7 @@ export const DEFAULT_CONFIG: UserConfig = {
 	scrollSpeed: 'medium',
 	homeFocus: 'first',               // p22b (user 2026-11-10): fresh installs and the Look reset start on the first app (P41c: 'last'); saved settings keep theirs, see the parse below
 	showLabels: true,
+	glass: true,
 	minimal: false,
 	showLgHome: false,                // P41c: hidden on a fresh install (saved settings keep theirs)
 	inputStatus: true,
@@ -563,6 +566,7 @@ export function loadConfig (): UserConfig {
 			homeFocus: parsed.homeFocus === 'first' ? 'first' : 'last',          // p22b: a saved setting without a valid value keeps reading as 'last' (as before); only a fresh install and the reset use the new default
 			scrollSpeed: SCROLL_SPEED_IDS.indexOf(parsed.scrollSpeed as ScrollSpeed) !== -1 ? (parsed.scrollSpeed as ScrollSpeed) : 'medium',
 			showLabels: parsed.showLabels !== false,
+			glass: parsed.glass !== false,
 			minimal: parsed.minimal === true,
 			showLgHome: parsed.showLgHome !== false,
 			inputStatus: parsed.inputStatus !== false,   // P41c: a saved setting without the field (updaters) reads as On; an explicit Off stays

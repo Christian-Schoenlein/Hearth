@@ -1,3 +1,4 @@
+import {WeatherGlyph} from '../components/Glyph';
 import {log} from '../lib/log';
 import {exec} from '../lib/apps';
 import {QUIET_OFF_COMMAND} from '../lib/quietoff';
@@ -60,6 +61,8 @@ export interface Appearance {
 	favSideMargin: number;
 	favBottomMargin: number;
 	showLabels: boolean;
+	/** fork: Glass look */
+	glass?: boolean;
 	/** 1 or 2 rows of apps */
 	rows: number;
 	clock: ClockConfig;
@@ -418,7 +421,10 @@ export function Home ({items: allItems, favourites, timeFormat, appearance, acti
 	return (
 		<div class={`screen${active ? '' : ' screen--away'}${shift ? ' screen--shift' : ''}${shiftVars.cls ? ' ' + shiftVars.cls : ''}`} style={shiftVars.css || undefined}>
 			{moveMode && <div class="movehint"><div class="movehint__main">{tt('move.hint')}</div><div class="movehint__sub">{tt('move.hintBack')}</div></div>}
-			{appearance.clock.show && !moveMode && <Clock now={now} format={timeFormat} config={appearance.clock} weather={weather} />}
+			{appearance.clock.show && !moveMode && <Clock now={now} format={timeFormat} config={appearance.clock} weather={appearance.glass ? null : weather} />}
+			{appearance.glass && weather && !moveMode && (
+				<div class="glasswx"><WeatherGlyph icon={weather.icon} /><span>{weather.main}{weather.city ? '  ' + weather.city : ''}</span></div>
+			)}
 			<div ref={rowsRef} class={classes} style={rowStyle}>
 				{sizes.map((size, r) => {
 					const start = offsets[r];

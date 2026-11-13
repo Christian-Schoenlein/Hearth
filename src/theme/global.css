@@ -893,3 +893,107 @@ html, body {
 .upd__fill { height: 100%; border-radius: 7px; background: var(--color-text-primary); transition: width 0.4s linear; }
 .upd__step { font-size: var(--font-option-description); color: var(--color-text-muted); }
 .upd__line::before { content: ''; position: absolute; left: 4px; top: 0.55em; width: 9px; height: 9px; border-radius: 50%; background: var(--color-text-secondary); }
+
+
+/* ---------- fork: Glass look (Settings > Look > Glass look; html.look-glass) ----------
+   Frosted glass for the clock card, the weather pill and the app dock. backdrop-filter is the costly part on a TV,
+   so it is only used on these three small areas; the tiles themselves only scale and fade, as before. */
+.look-glass {
+	--glass-bg: rgba(255, 255, 255, 0.14);
+	--glass-edge: rgba(255, 255, 255, 0.34);
+	--glass-shine: inset 0 1.5px 0 rgba(255, 255, 255, 0.42);
+	--glass-blur: blur(22px) saturate(1.45);
+}
+.look-glass .clock {
+	padding: 26px 46px 30px;
+	border-radius: 38px;
+	background: var(--glass-bg);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border: 1.5px solid var(--glass-edge);
+	box-shadow: var(--glass-shine), 0 18px 48px rgba(0, 0, 0, 0.16);
+	--clock-shadow: none;
+}
+.look-glass .clock__scrim { display: none; }
+.look-glass .clock__date { opacity: 0.88; }
+.glasswx {
+	position: absolute;
+	right: 5%;
+	top: 8%;
+	display: flex;
+	align-items: center;
+	padding: 14px 28px 14px 22px;
+	border-radius: 999px;
+	font-size: 30px;
+	font-weight: 400;
+	color: #fff;
+	white-space: nowrap;
+	pointer-events: none;
+	background: var(--glass-bg);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border: 1.5px solid var(--glass-edge);
+	box-shadow: var(--glass-shine);
+}
+.glasswx svg { width: 1.35em; height: 1.35em; margin-right: 0.45em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.screen--shift .glasswx { transform: translate3d(var(--shift-x), var(--shift-y), 0); }
+
+/* the dock: the glass hugs the tiles when they all fit; a long row gets a full-width glass bar instead */
+/* clip sideways only, so the floating name above the dock is not cut off (overflow: clip keeps the other axis visible) */
+.look-glass .row__viewport { overflow-x: clip; overflow-y: visible; }
+.look-glass .row__track--centered {
+	width: -webkit-max-content;
+	width: max-content;
+	margin: 0 auto;
+	padding: 22px 26px;
+	border-radius: 44px;
+	background: var(--glass-bg);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border: 1.5px solid var(--glass-edge);
+	box-shadow: var(--glass-shine), 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+/* a long row: a full-width glass bar. The glass is a pseudo-element, because a border-radius on the clipping viewport
+   makes webOS's Chromium 120 clip both axes (the floating name above the dock disappeared). */
+.look-glass .row__viewport--scroll { position: relative; z-index: 0; padding: 22px 34px; margin: 0; }
+.look-glass .row__viewport--scroll::before {
+	content: '';
+	position: absolute;
+	left: 0; top: 0; right: 0; bottom: 0;
+	z-index: -1;
+	border-radius: 44px;
+	background: var(--glass-bg);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+	border: 1.5px solid var(--glass-edge);
+	box-shadow: var(--glass-shine), 0 18px 48px rgba(0, 0, 0, 0.18);
+	pointer-events: none;
+}
+/* lift the dock off the bottom edge */
+.look-glass .rows { padding-bottom: 34px; }
+.look-glass .tile__box { box-shadow: none; }
+.look-glass .tile--focused .tile__frame { transform: translate3d(0, -8px, 0) scale(var(--motion-focus-scale)); }
+/* names: hidden in the dock; the focused app's name floats above it as a small pill */
+.look-glass .tile { position: relative; }
+.look-glass .tile__label {
+	position: absolute;
+	left: 50%;
+	bottom: calc(100% + 30px);
+	width: auto;
+	height: auto;
+	margin: 0;
+	padding: 8px 22px;
+	border-radius: 999px;
+	background: rgba(0, 0, 0, 0.45);
+	color: #fff;
+	font-size: 26px;
+	line-height: 1.2;
+	white-space: nowrap;
+	transform: translateX(-50%);
+	opacity: 0;
+	transition: opacity var(--motion-focus-ms) ease-out;
+	pointer-events: none;
+	z-index: 2;
+}
+.look-glass .tile--focused .tile__label { opacity: 1; }
+.look-glass .tile__note { display: none; }

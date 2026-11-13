@@ -208,7 +208,7 @@ export function Row ({label, items, focused, selected, emptyText, onSelect, onAc
 	return (
 		<section class={`row${focused ? ' row--focused' : ''}`} style={sideMargin === undefined ? undefined : {marginLeft: `${sideMargin}px`, marginRight: `${sideMargin}px`}}>
 			{label && <h2 class="row__label">{label}</h2>}
-			<div ref={viewportRef} class="row__viewport" onMouseMove={edgeMove} onMouseLeave={edgeLeave}>
+			<div ref={viewportRef} class={`row__viewport${items.length && !fits ? ' row__viewport--scroll' : ''}`} onMouseMove={edgeMove} onMouseLeave={edgeLeave}>
 				{items.length === 0
 					? <div class="row__empty">{emptyText || tt('row.nothingHereYet')}</div>
 					: <div ref={trackRef} class={`row__track${fits ? ' row__track--centered' : ''}${last.current.fast ? ' row__track--fast' : ''}`} style={{transform: `translate3d(${-offset}px, 0, 0)`}}>

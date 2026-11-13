@@ -230,6 +230,7 @@ export function resetLook (c: UserConfig): UserConfig {
 		labelWeight: 400,
 		scrollSpeed: 'medium',
 		showLabels: true,
+		glass: true,
 		minimal: false,
 		rows: 1,
 		sideMargin: RANGES.sideMargin.def,
@@ -365,6 +366,9 @@ const BASE_PREFS: PrefDef[] = [
 		visible: (c) => isMonoStyle(effectiveIconStyle(c.iconStyle, c.theme))},
 	choice('rows', 'look',
 		[1, 2] as const, (c) => c.rows, (c, v) => ({...c, rows: v}), (v) => (v === 1 ? td('pref.row1') : td('pref.rows2'))),
+	// fork: switching Glass on also moves the clock card to the top left, where the look is designed to sit
+	toggle('glass', 'look',
+		(c) => c.glass, (c, v) => ({...c, glass: v, clock: v ? {...c.clock, align: 'left', left: 5, top: 8} : {...c.clock, align: 'center', left: 50, top: 20}})),
 	toggle('showLabels', 'look',
 		(c) => c.showLabels, (c, v) => ({...c, showLabels: v})),
 	choice('labelColor', 'look',
@@ -590,7 +594,7 @@ const BASE_PREFS: PrefDef[] = [
 /** Where every row lives, in order: tab, group ('' = no group, always shown), row ids. */
 const LAYOUT: [PrefTab, string, string[]][] = [
 	['look', '', ['restoreLook']],
-	['look', 'Theme', ['theme', 'themeExport', 'themeSave', 'themeRemove']],
+	['look', 'Theme', ['glass', 'theme', 'themeExport', 'themeSave', 'themeRemove']],
 	['look', 'Icons', ['iconScale', 'tileShape', 'iconStyle', 'iconLight', 'iconColor', 'iconGap', 'iconOpacity']],
 	['look', 'Home row', ['rows', 'scrollSpeed', 'homeFocus', 'sideMargin', 'bottomMargin', 'inputStatus', 'showLgHome', 'showSystem', 'hideSettings']],
 	['look', 'Labels', ['showLabels', 'labelColor', 'labelFont', 'labelSize', 'labelWeight']],
