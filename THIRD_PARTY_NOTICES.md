@@ -93,3 +93,26 @@ The folder `homehook` of the install holds two unmodified programs taken from th
 | `homehook/ezinject` | [ezinject](https://github.com/smx-smx/ezinject) by Stefano Moioli (smx-smx) | zlib-style, © 2021 Stefano Moioli (`licenses/ezinject-COPYING.txt`) | `d2def5b3f68a415cf5a4a747ab70115e70a82f721bafbcc0d9c5a7bd5c161160` |
 
 The source code of the GPL-3.0 library is at https://github.com/sundermann/inputhookpp and, with the changes made for Input Hook, at https://github.com/Simon34545/lginputhook (the same programs this install carries). Anyone may ask the Hearth maintainer for a copy as well. The original idea of the hook is by Informatic (the `inputhook` script).
+
+## couch-tv (scene look, scene pictures, Antonio font copy)
+
+The Scenes look (src/components/Scenes.tsx, the "fork: Couch TV scene look" part of src/theme/global.css) is ported from
+couch-tv, https://github.com/Seagey/couch-tv, and public/scenes/ holds its scene pictures (see public/scenes/CREDITS.md).
+The Antonio font (src/assets/antonio-latin-300.woff2) is under the SIL Open Font License 1.1.
+
+MIT License
+
+Copyright (c) 2026 Seagey
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

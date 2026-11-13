@@ -895,105 +895,104 @@ html, body {
 .upd__line::before { content: ''; position: absolute; left: 4px; top: 0.55em; width: 9px; height: 9px; border-radius: 50%; background: var(--color-text-secondary); }
 
 
-/* ---------- fork: Glass look (Settings > Look > Glass look; html.look-glass) ----------
-   Frosted glass for the clock card, the weather pill and the app dock. backdrop-filter is the costly part on a TV,
-   so it is only used on these three small areas; the tiles themselves only scale and fade, as before. */
-.look-glass {
-	--glass-bg: rgba(255, 255, 255, 0.14);
-	--glass-edge: rgba(255, 255, 255, 0.34);
-	--glass-shine: inset 0 1.5px 0 rgba(255, 255, 255, 0.42);
-	--glass-blur: blur(22px) saturate(1.45);
+/* ---------- fork: the Couch TV scene look (Settings > Look > Scenes; html.look-glass) ----------
+   Ported from couch-tv (github.com/Seagey/couch-tv, MIT): tv-home/web/app.css, the Night theme. Sizes are Couch's rem
+   values at 16 px (Hearth lays out at 1920 x 1080). Layers: photo, shade, glass clock, the scenery cut out of the photo,
+   a bottom scrim, then the date and the dock. */
+@font-face { font-family: 'Antonio'; font-weight: 300; font-display: block; src: url('../assets/antonio-latin-300.woff2') format('woff2'); }
+.scenes { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none; overflow: hidden; background: #000; }
+.scenes::after { content: ''; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.5) 100%); }
+.scene { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.scene--on { -webkit-animation: hearth-scene-in 1600ms ease-in-out; animation: hearth-scene-in 1600ms ease-in-out; }
+@-webkit-keyframes hearth-scene-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hearth-scene-in { from { opacity: 0; } to { opacity: 1; } }
+.scene__bg, .scene__fg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+.scene__shade { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.gclock {
+	position: absolute; left: 0; right: 0; top: 150px; text-align: center; white-space: nowrap;
+	font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 300; font-size: 400px; line-height: 0.82; letter-spacing: -0.02em;
+	filter: drop-shadow(0 6px 28px rgba(0, 0, 0, 0.16));
 }
-.look-glass .clock {
-	padding: 26px 46px 30px;
-	border-radius: 38px;
-	background: var(--glass-bg);
-	-webkit-backdrop-filter: var(--glass-blur);
-	backdrop-filter: var(--glass-blur);
-	border: 1.5px solid var(--glass-edge);
-	box-shadow: var(--glass-shine), 0 18px 48px rgba(0, 0, 0, 0.16);
-	--clock-shadow: none;
+.gclock__fill {
+	display: block; padding: 0.2em 0; margin: -0.2em 0; color: transparent;
+	-webkit-background-clip: text; background-clip: text; background-size: 100vw 100vh; background-repeat: no-repeat;
 }
-.look-glass .clock__scrim { display: none; }
-.look-glass .clock__date { opacity: 0.88; }
-.glasswx {
-	position: absolute;
-	right: 5%;
-	top: 8%;
-	display: flex;
-	align-items: center;
-	padding: 14px 28px 14px 22px;
-	border-radius: 999px;
-	font-size: 30px;
-	font-weight: 400;
-	color: #fff;
-	white-space: nowrap;
-	pointer-events: none;
-	background: var(--glass-bg);
-	-webkit-backdrop-filter: var(--glass-blur);
-	backdrop-filter: var(--glass-blur);
-	border: 1.5px solid var(--glass-edge);
-	box-shadow: var(--glass-shine);
+.gclock__rim { position: absolute; left: 0; top: 0; right: 0; bottom: 0; color: rgba(255, 255, 255, 0.1); -webkit-text-stroke: 1.44px rgba(255, 255, 255, 0.55); }
+.gclock__sheen {
+	position: absolute; left: 0; top: 0; right: 0; bottom: 0; color: transparent; -webkit-background-clip: text; background-clip: text;
+	background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.22) 100%);
 }
-.glasswx svg { width: 1.35em; height: 1.35em; margin-right: 0.45em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.screen--shift .glasswx { transform: translate3d(var(--shift-x), var(--shift-y), 0); }
+/* after 9 pm everything dims a little */
+.scenes--late .scene__bg, .scenes--late .scene__fg, .scenes--late .gclock { filter: brightness(0.72); }
+/* Night: the clock behind the peak, pink glass */
+.scene--night .scene__bg, .scene--night .scene__fg { filter: brightness(0.86); }
+.scene--night .gclock__fill { filter: brightness(1.15) saturate(1.2); opacity: 0.9; }
+.scene--night .gclock__rim { color: rgba(255, 200, 215, 0.06); -webkit-text-stroke-color: rgba(255, 215, 225, 0.5); }
+/* Golden hour: a little smaller, low enough for the volcano's tip to rise into the digits */
+.scene--golden .gclock { top: 152px; font-size: 390px; }
+/* Waterline: the clock sits on the water; below the line it is a blurred reflection */
+.scene--water .scene__shade { background: linear-gradient(180deg, rgba(0, 12, 24, 0.42) 0%, rgba(0, 12, 24, 0.12) 40%, rgba(0, 0, 0, 0) 52%, rgba(0, 20, 40, 0.5) 100%); }
+.scene--water .gclock { top: 268px; font-size: 420px; filter: drop-shadow(0 8px 30px rgba(0, 20, 40, 0.35)); }
+.scene--water .gclock--under { filter: blur(2.2px); opacity: 0.78; transform: translateX(5px); }
+.scene--water .gclock--under .gclock__fill { filter: hue-rotate(-8deg) saturate(1.4); }
+.scene--water .gclock--under .gclock__rim { -webkit-text-stroke-color: rgba(170, 240, 255, 0.5); }
+/* Fog: a big dark clock on the left, sinking into the misty hills */
+.scene--fog .gclock { left: 96px; right: auto; top: 172px; font-size: 470px; text-align: left; filter: none; }
+.scene--fog .gclock__fill { filter: brightness(0.46) saturate(0.8) contrast(1.1); opacity: 0.8; }
+.scene--fog .gclock__rim { color: transparent; -webkit-text-stroke-color: rgba(255, 255, 255, 0.6); }
+.scene--fog .gclock__sheen { display: none; }
+/* Dawn: warm light at the top, the clock low enough for the ridges to cross it */
+.scene--dawn .scene__shade { background: linear-gradient(180deg, rgba(50, 28, 12, 0.42) 0%, rgba(50, 28, 12, 0) 55%); }
+.scene--dawn .gclock { top: 230px; filter: drop-shadow(0 8px 34px rgba(60, 30, 10, 0.3)); }
+/* the date (and the weather) just above each scene's clock */
+.scenes__date {
+	position: absolute; left: 0; right: 0; top: 96px; text-align: center; white-space: nowrap;
+	font-family: 'Inter Variable', sans-serif; font-size: 34px; line-height: 40px; font-weight: 500; color: #fff;
+	text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25); z-index: 1;
+}
+.scenes__wx { color: rgba(255, 255, 255, 0.78); font-weight: 400; }
+.scenes__date svg { width: 30px; height: 30px; vertical-align: -5px; margin: 0 6px 0 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.scenes--show-night .scenes__date { color: rgba(255, 232, 238, 0.92); }
+.scenes--show-night .scenes__wx { color: rgba(255, 232, 238, 0.78); }
+.scenes--show-golden .scenes__date { top: 106px; }
+.scenes--show-water .scenes__date { top: 216px; }
+.scenes--show-dawn .scenes__date { top: 176px; }
+.scenes--show-fog .scenes__date { left: 104px; right: auto; top: 116px; text-align: left; color: #16201d; text-shadow: none; }
+.scenes--show-fog .scenes__wx { color: rgba(22, 32, 29, 0.72); }
+.look-glass .screen { z-index: 0; }
 
-/* the dock: the glass hugs the tiles when they all fit; a long row gets a full-width glass bar instead */
+/* the dock: Couch's dark glass bar; the glass hugs the tiles when they all fit, a long row gets a full-width bar */
+.look-glass {
+	--dock-bg: rgba(30, 20, 28, 0.32);
+	--dock-blur: blur(28px) saturate(170%);
+	--dock-shadow: inset 0 0 0 1px rgba(255, 210, 220, 0.16), inset 0 1px 0 rgba(255, 220, 230, 0.14), 0 24px 60px rgba(0, 0, 0, 0.28);
+}
 /* clip sideways only, so the floating name above the dock is not cut off (overflow: clip keeps the other axis visible) */
 .look-glass .row__viewport { overflow-x: clip; overflow-y: visible; }
 .look-glass .row__track--centered {
-	width: -webkit-max-content;
-	width: max-content;
-	margin: 0 auto;
-	padding: 22px 26px;
-	border-radius: 44px;
-	background: var(--glass-bg);
-	-webkit-backdrop-filter: var(--glass-blur);
-	backdrop-filter: var(--glass-blur);
-	border: 1.5px solid var(--glass-edge);
-	box-shadow: var(--glass-shine), 0 18px 48px rgba(0, 0, 0, 0.18);
+	width: -webkit-max-content; width: max-content; margin: 0 auto; padding: 22px 28px; border-radius: 46px;
+	background: var(--dock-bg); -webkit-backdrop-filter: var(--dock-blur); backdrop-filter: var(--dock-blur); box-shadow: var(--dock-shadow);
 }
-/* a long row: a full-width glass bar. The glass is a pseudo-element, because a border-radius on the clipping viewport
-   makes webOS's Chromium 120 clip both axes (the floating name above the dock disappeared). */
+/* a border-radius on the clipping viewport makes webOS's Chromium 120 clip both axes, so the bar's glass is a ::before */
 .look-glass .row__viewport--scroll { position: relative; z-index: 0; padding: 22px 34px; margin: 0; }
 .look-glass .row__viewport--scroll::before {
-	content: '';
-	position: absolute;
-	left: 0; top: 0; right: 0; bottom: 0;
-	z-index: -1;
-	border-radius: 44px;
-	background: var(--glass-bg);
-	-webkit-backdrop-filter: var(--glass-blur);
-	backdrop-filter: var(--glass-blur);
-	border: 1.5px solid var(--glass-edge);
-	box-shadow: var(--glass-shine), 0 18px 48px rgba(0, 0, 0, 0.18);
-	pointer-events: none;
+	content: ''; position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: -1; border-radius: 46px; pointer-events: none;
+	background: var(--dock-bg); -webkit-backdrop-filter: var(--dock-blur); backdrop-filter: var(--dock-blur); box-shadow: var(--dock-shadow);
 }
-/* lift the dock off the bottom edge */
-.look-glass .rows { padding-bottom: 34px; }
+.look-glass .rows { padding-bottom: 30px; }
+/* Apple's app-icon corner (Couch measured 22.5% as the closest plain CSS) */
+.look-glass .tile__box, .look-glass .tile__ring { border-radius: 22.5%; }
 .look-glass .tile__box { box-shadow: none; }
-.look-glass .tile--focused .tile__frame { transform: translate3d(0, -8px, 0) scale(var(--motion-focus-scale)); }
-/* names: hidden in the dock; the focused app's name floats above it as a small pill */
+.look-glass .tile:not(.tile--focused) .tile__image { filter: brightness(0.82); }
+.look-glass .tile--focused .tile__frame { transform: translate3d(0, -10px, 0) scale(1.16); }
+.look-glass .tile--focused .tile__ring { box-shadow: 0 0 0 4px #fff, 0 18px 40px rgba(0, 0, 0, 0.4); }
+/* names: hidden in the dock; the focused app's name floats above it as a small glass pill */
 .look-glass .tile { position: relative; }
 .look-glass .tile__label {
-	position: absolute;
-	left: 50%;
-	bottom: calc(100% + 30px);
-	width: auto;
-	height: auto;
-	margin: 0;
-	padding: 8px 22px;
-	border-radius: 999px;
-	background: rgba(0, 0, 0, 0.45);
-	color: #fff;
-	font-size: 26px;
-	line-height: 1.2;
-	white-space: nowrap;
-	transform: translateX(-50%);
-	opacity: 0;
-	transition: opacity var(--motion-focus-ms) ease-out;
-	pointer-events: none;
-	z-index: 2;
+	position: absolute; left: 50%; bottom: calc(100% + 34px); width: auto; height: auto; margin: 0;
+	padding: 8px 22px; border-radius: 999px; font-size: 24px; line-height: 1.2; font-weight: 600; color: #fff; white-space: nowrap;
+	background: rgba(30, 20, 28, 0.42); box-shadow: inset 0 0 0 1px rgba(255, 210, 220, 0.16), 0 16px 40px rgba(0, 0, 0, 0.28);
+	transform: translateX(-50%); opacity: 0; transition: opacity var(--motion-focus-ms) ease-out; pointer-events: none; z-index: 2;
 }
 .look-glass .tile--focused .tile__label { opacity: 1; }
 .look-glass .tile__note { display: none; }

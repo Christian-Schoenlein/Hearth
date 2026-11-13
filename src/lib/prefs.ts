@@ -366,9 +366,9 @@ const BASE_PREFS: PrefDef[] = [
 		visible: (c) => isMonoStyle(effectiveIconStyle(c.iconStyle, c.theme))},
 	choice('rows', 'look',
 		[1, 2] as const, (c) => c.rows, (c, v) => ({...c, rows: v}), (v) => (v === 1 ? td('pref.row1') : td('pref.rows2'))),
-	// fork: switching Glass on also moves the clock card to the top left, where the look is designed to sit
+	// fork: the Couch TV scene look
 	toggle('glass', 'look',
-		(c) => c.glass, (c, v) => ({...c, glass: v, clock: v ? {...c.clock, align: 'left', left: 5, top: 8} : {...c.clock, align: 'center', left: 50, top: 20}})),
+		(c) => c.glass, (c, v) => ({...c, glass: v})),
 	toggle('showLabels', 'look',
 		(c) => c.showLabels, (c, v) => ({...c, showLabels: v})),
 	choice('labelColor', 'look',
