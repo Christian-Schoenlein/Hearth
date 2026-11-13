@@ -19,12 +19,20 @@ function poll (until: number, total: number, onProgress?: (p: InstallProgress) =
 	});
 }
 
-/** True when the entry carries everything an install needs. */
+/**
+ * Fork: in-app installs are switched off. The update list can be fetched without certificate checks (curl -k / wget
+ * --no-check-certificate fallback in weathernet.ts) and its own sha256 is the only check, so a network attacker could get
+ * any ipk installed as root. This fork is installed over root ssh instead; the Updates screen only shows the list.
+ */
+export const IN_APP_INSTALL = false;
+
+/** True when the entry carries everything an install needs (and in-app installs are on). */
 export function canInstall (e: UpdateEntry | undefined): boolean {
-	return !!e && !!e.ipkUrl && !!e.sha256 && e.size > 0;
+	return IN_APP_INSTALL && !!e && !!e.ipkUrl && !!e.sha256 && e.size > 0;
 }
 
 export function installUpdate (e: UpdateEntry, onProgress?: (p: InstallProgress) => void): Promise<InstallOutcome> {
+	if (!IN_APP_INSTALL) { log('update: in-app install is off in this fork'); return Promise.resolve({ok: false}); }
 	let launch: string;
 	try { launch = installLaunch({url: e.ipkUrl, sha: e.sha256, version: e.version}); } catch (err) { log('update: install not started (bad entry)'); return Promise.resolve({ok: false}); }
 	log(`update: install ${e.version} started`);

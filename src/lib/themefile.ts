@@ -11,6 +11,9 @@ import {t as tt} from '../i18n';
 export const THEME_FORMAT = 1;
 /** a file bigger than this is refused (broken or absurd file); counts are never limited */
 export const MAX_FILE_BYTES = 100 * 1024 * 1024;
+/** fork: the whole unpacked theme and its file count (checked on the zip's listing before anything is extracted) */
+export const MAX_THEME_BYTES = 300 * 1024 * 1024;
+export const MAX_THEME_FILES = 5000;
 export const MAX_MANIFEST_BYTES = 3 * 1024 * 1024;   // read in one piece by the loader (about 25 000 apps)
 export const MANIFEST_FILE = 'manifest.json';
 /** the errors listed in a pop-up (the rest are counted) */
@@ -65,12 +68,18 @@ export function parseManifest (text: string): {ok: true; value: unknown} | {ok: 
 /** The zip's files (path -> size): safe names, data types only, not absurdly big. Used before anything is extracted and again by `validateTheme`. */
 export function checkFiles (files: Record<string, number>): string[] {
 	const errors: string[] = [];
-	for (const f of Object.keys(files)) {
+	const names = Object.keys(files);
+	let total = 0;
+	// fork: a whole-theme budget too, so a zip of many allowed files cannot fill the TV's /tmp when it is extracted as root
+	if (names.length > MAX_THEME_FILES) errors.push(`The theme has too many files (${names.length}, at most ${MAX_THEME_FILES})`);
+	for (const f of names) {
 		if (!safePath(f)) { errors.push(`The file name "${f}" is not allowed`); continue; }
 		const e = extOf(f);
 		if (THEME_FILE_EXT.indexOf(e) === -1) errors.push(`The file "${f}" is not allowed (a theme holds only ${THEME_FILE_EXT.join(', ')} files)`);
 		else if (!(files[f] >= 0) || files[f] > MAX_FILE_BYTES) errors.push(`The file "${f}" is too big`);
+		else total += files[f];
 	}
+	if (total > MAX_THEME_BYTES) errors.push(`The theme is too big (${Math.round(total / 1048576)} MB unpacked, at most ${MAX_THEME_BYTES / 1048576} MB)`);
 	return errors;
 }
 
