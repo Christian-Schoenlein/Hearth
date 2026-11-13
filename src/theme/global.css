@@ -946,18 +946,18 @@ html, body {
 .scene--dawn .gclock { top: 230px; filter: drop-shadow(0 8px 34px rgba(60, 30, 10, 0.3)); }
 /* the date (and the weather) just above each scene's clock */
 .scenes__date {
-	position: absolute; left: 0; right: 0; top: 96px; text-align: center; white-space: nowrap;
+	position: absolute; left: 0; right: 0; top: 60px; text-align: center; white-space: nowrap;
 	font-family: 'Inter Variable', sans-serif; font-size: 34px; line-height: 40px; font-weight: 500; color: #fff;
 	text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25); z-index: 1;
 }
-.scenes__wx { color: rgba(255, 255, 255, 0.78); font-weight: 400; }
-.scenes__date svg { width: 30px; height: 30px; vertical-align: -5px; margin: 0 6px 0 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.scenes__wx { display: block; margin-top: 6px; font-size: 28px; line-height: 34px; color: rgba(255, 255, 255, 0.78); font-weight: 400; }   /* the weather on its own line under the day */
+.scenes__date svg { width: 30px; height: 30px; vertical-align: -5px; margin: 0 8px 0 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .scenes--show-night .scenes__date { color: rgba(255, 232, 238, 0.92); }
 .scenes--show-night .scenes__wx { color: rgba(255, 232, 238, 0.78); }
-.scenes--show-golden .scenes__date { top: 106px; }
-.scenes--show-water .scenes__date { top: 216px; }
-.scenes--show-dawn .scenes__date { top: 176px; }
-.scenes--show-fog .scenes__date { left: 104px; right: auto; top: 116px; text-align: left; color: #16201d; text-shadow: none; }
+.scenes--show-golden .scenes__date { top: 66px; }
+.scenes--show-water .scenes__date { top: 176px; }
+.scenes--show-dawn .scenes__date { top: 136px; }
+.scenes--show-fog .scenes__date { left: 104px; right: auto; top: 76px; text-align: left; color: #16201d; text-shadow: none; }
 .scenes--show-fog .scenes__wx { color: rgba(22, 32, 29, 0.72); }
 .look-glass .screen { z-index: 0; }
 
@@ -980,6 +980,12 @@ html, body {
 	background: var(--dock-bg); -webkit-backdrop-filter: var(--dock-blur); backdrop-filter: var(--dock-blur); box-shadow: var(--dock-shadow);
 }
 .look-glass .rows { padding-bottom: 30px; }
+/* the dock hides and comes back like the macOS Dock: it slides off the bottom edge and back up (translate, so the OLED shift's transform is untouched) */
+.look-glass .rows { transition: opacity 160ms ease-out, transform 4s linear, translate 560ms cubic-bezier(0.16, 1, 0.3, 1); }
+.look-glass .rows--quiet { opacity: 0; translate: 0 calc(100% + 120px); transition: opacity 180ms linear 340ms, transform 4s linear, translate 520ms cubic-bezier(0.5, 0, 0.75, 0); }
+.look-glass .rows--enter { -webkit-animation: hearth-dock-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both; animation: hearth-dock-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@-webkit-keyframes hearth-dock-in { from { translate: 0 calc(100% + 120px); } to { translate: 0 0; } }
+@keyframes hearth-dock-in { from { translate: 0 calc(100% + 120px); } to { translate: 0 0; } }
 /* Apple's app-icon corner (Couch measured 22.5% as the closest plain CSS) */
 .look-glass .tile__box, .look-glass .tile__ring { border-radius: 22.5%; }
 .look-glass .tile__box { box-shadow: none; }

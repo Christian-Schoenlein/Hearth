@@ -285,6 +285,14 @@ export function Home ({items: allItems, favourites, timeFormat, appearance, acti
 		};
 	}, [appearance.quietSec, appearance.quietDimSec, appearance.quietPowerOff, active, paused, wake]);
 
+	// Fork: the dock slides up like the macOS Dock each time Home is shown (CSS: `.look-glass .rows--enter`).
+	const [entering, setEntering] = useState(true);
+	useEffect(() => {
+		setEntering(true);
+		const t = window.setTimeout(() => setEntering(false), 700);
+		return () => window.clearTimeout(t);
+	}, [wake]);
+
 	// Quiet mode also hides the wallpaper's bottom fade (CSS: `.hearth-quiet .wallpaper__fade`).
 	useEffect(() => {
 		document.body.classList.toggle('hearth-quiet', quiet);
@@ -418,7 +426,7 @@ export function Home ({items: allItems, favourites, timeFormat, appearance, acti
 	const pickedMoves = picked && tileKeys ? movesFor(moveGroup(tileKeys, favList, picked), picked) : null;
 	const pickedArrows = pickedMoves ? {left: pickedMoves.left, right: pickedMoves.right} : undefined;
 	const shiftVars = varScope('shift', shift ? {'--shift-x': `${shift.x}px`, '--shift-y': `${shift.y}px`} : {});
-	const classes = rowsClasses(appearance, {multi: sizes.length > 1, favN, open, shut: everOpen.current, quiet}, rowVars.cls);
+	const classes = rowsClasses(appearance, {multi: sizes.length > 1, favN, open, shut: everOpen.current, quiet}, rowVars.cls) + (entering ? ' rows--enter' : '');
 
 	return (
 		<div class={`screen${active ? '' : ' screen--away'}${shift ? ' screen--shift' : ''}${shiftVars.cls ? ' ' + shiftVars.cls : ''}`} style={shiftVars.css || undefined}>
