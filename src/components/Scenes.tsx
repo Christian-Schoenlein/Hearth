@@ -119,8 +119,8 @@ export function Scenes ({now, format, geo, weather}: Props) {
 		<div class={`scenes${night ? ' scenes--late' : ''} scenes--show-${shown.cur}`}>
 			{ids.map((id) => <Scene key={id} id={id} on={id === shown.cur} text={time} />)}
 			<div class="scenes__date">
-				<span>{dayName(now)} {dateText(now)}</span>
 				{weather && <span class="scenes__wx"><WeatherGlyph icon={weather.icon} />{weather.main}</span>}
+				<span class="scenes__day">{dayName(now)} {dateText(now)}</span>
 			</div>
 		</div>
 	);

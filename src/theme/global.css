@@ -950,15 +950,14 @@ html, body {
 	font-family: 'Inter Variable', sans-serif; font-size: 34px; line-height: 40px; font-weight: 500; color: #fff;
 	text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25); z-index: 1;
 }
-.scenes__wx { display: block; margin-top: 6px; font-size: 28px; line-height: 34px; color: rgba(255, 255, 255, 0.78); font-weight: 400; }   /* the weather on its own line under the day */
+.scenes__wx, .scenes__day { display: block; }   /* the weather on its own line above the day, in the same type */
+.scenes__wx { margin-bottom: 4px; }
 .scenes__date svg { width: 30px; height: 30px; vertical-align: -5px; margin: 0 8px 0 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .scenes--show-night .scenes__date { color: rgba(255, 232, 238, 0.92); }
-.scenes--show-night .scenes__wx { color: rgba(255, 232, 238, 0.78); }
 .scenes--show-golden .scenes__date { top: 66px; }
 .scenes--show-water .scenes__date { top: 176px; }
 .scenes--show-dawn .scenes__date { top: 136px; }
 .scenes--show-fog .scenes__date { left: 104px; right: auto; top: 76px; text-align: left; color: #16201d; text-shadow: none; }
-.scenes--show-fog .scenes__wx { color: rgba(22, 32, 29, 0.72); }
 .look-glass .screen { z-index: 0; }
 
 /* the dock: Couch's dark glass bar; the glass hugs the tiles when they all fit, a long row gets a full-width bar */
