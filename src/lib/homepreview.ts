@@ -2,7 +2,7 @@
 // Wallpaper tab: the picture, its size, opacity and bottom fade (interval and shuffle change nothing you can see here).
 // Look: icon size, spacing, shape, style, tile, colour, opacity, margins, rows, the extra tiles, the app names, the theme.
 const IDS = ['iconScale', 'iconGap', 'tileShape', 'iconStyle', 'iconLight', 'iconColor', 'iconOpacity', 'rows', 'sideMargin', 'bottomMargin', 'favSideMargin', 'favBottomMargin',
-	'inputStatus', 'showLgHome', 'showSystem', 'hideSettings', 'theme', 'showLabels', 'labelColor', 'labelFont', 'labelSize', 'labelWeight',
+	'inputStatus', 'showLgHome', 'showSystem', 'showSaverApp', 'hideSettings', 'theme', 'showLabels', 'labelColor', 'labelFont', 'labelSize', 'labelWeight',
 	'wallpaper', 'wallpaperFit', 'wallpaperOpacity', 'fadeStrength',
 	'clockTop', 'clockLeft'];          // p30 (user): the Widget position rows show the whole 16:9 screen with the widget in its place
 

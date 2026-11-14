@@ -1,5 +1,6 @@
 import {HomeKey} from './screens/HomeKey';
 import {Updates} from './screens/Updates';
+import {SaverApp} from './screens/SaverApp';
 import {ExtraKeys} from './screens/ExtraKeys';
 import {setMonoIcons} from './lib/monoicon';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'preact/hooks';
@@ -101,26 +102,27 @@ import {fetchWeather} from './lib/weathernet';
 import {FRESH_MS, isFresh, readWeatherCache, usableCached, weatherView, writeWeatherCache, type City, type WeatherData} from './lib/weather';
 import {CONNECT_APPS_NOTE} from './config/connectapps';
 
-type Screen = 'home' | 'settings' | 'picker' | 'saverpicker' | 'cities' | 'source' | 'iconpicker' | 'homekey' | 'preload' | 'poweron' | 'extrakeys' | 'themes' | 'languages' | 'updates' | 'essedit';
+type Screen = 'home' | 'saverapp' | 'settings' | 'picker' | 'saverpicker' | 'cities' | 'source' | 'iconpicker' | 'homekey' | 'preload' | 'poweron' | 'extrakeys' | 'themes' | 'languages' | 'updates' | 'essedit';
 
 const TAB = {apps: 'apps', sources: 'sources', appsSources: 'appsources', essentials: 'essentials', look: 'look', clock: 'clock', wallpaper: 'wallpaper', saver: 'saver', system: 'system', debug: 'debug', tests: 'tests'} as const;
 const HOME_KEY_MS = 1000;               // p33e: a Home key seen this long before a relaunch makes it a Home press
 const DOUBLE_HOME_MIN_MS = 150;        // p33e: two relaunches between these two gaps = Home pressed twice (fallback)
 const DOUBLE_HOME_MS = 800;
 const HIDDEN_GRACE_MS = 3000;           // p24: hidden for less than this does not close Settings or the other screens
-const MISC = {lgHome: 'lg-home', settings: 'settings', system: 'system-settings'} as const;
+const MISC = {lgHome: 'lg-home', settings: 'settings', system: 'system-settings', saver: 'saver-app'} as const;
 
 /** The three tiles that always end the row. */
 const MISC_TILES: TileModel[] = [
 	{key: MISC.lgHome, get label () { return tt('app.lgHome'); }, glyph: 'house'},          // LF1: getters, the text follows a language change
 	{key: MISC.system, get label () { return tt('app.systemSettings'); }, glyph: 'tv'},
+	{key: MISC.saver, get label () { return tt('app.saverApp'); }, imageUrl: 'icons/saver.png'},      // fork: screens/SaverApp.tsx
 	{key: MISC.settings, get label () { return tt('app.hearthSettings'); }, glyph: 'gear'}
 ];
 
 export function App () {
 	// W2: Hearth was left while listening for buttons (the user pressed Home) and starts again within the window: back to the button screen, which finishes the mapping and shows its pop-up
 	const [screen, setScreen] = useState<Screen>(() => (listening(resumeListening()) ? 'homekey' : 'home'));
-	const settingsOpen = screen !== 'home';   // Settings stays open under its sub-screens (editor, pickers)
+	const settingsOpen = screen !== 'home' && screen !== 'saverapp';   // Settings stays open under its sub-screens (editor, pickers)
 	const [config, setConfig] = useState<UserConfig>(loadConfig);
 	applyLanguage(config.language);       // T2b: the texts follow the saved language (cheap when nothing changed; a loaded pack was already applied at start-up)
 	const [apps, setApps] = useState<AppEntry[]>(cachedApps);      // last known list: the row is drawn at once
@@ -972,8 +974,8 @@ export function App () {
 		[shownApps, shownInputs, config.tileOrder, config.sourceEdits, config.inputStatus, appEditsShown, config.orderByRecent, config.favourites, recentWake, themeRev]
 	);
 	const homeItems: TileModel[] = useMemo(
-		() => orderedTiles.concat(MISC_TILES.filter((t) => (t.key === MISC.lgHome ? config.showLgHome : t.key === MISC.system ? config.showSystem : !config.hideSettings || tileBack))),
-		[orderedTiles, config.showLgHome, config.showSystem, config.hideSettings, tileBack, config.language, langTick]
+		() => orderedTiles.concat(MISC_TILES.filter((t) => (t.key === MISC.lgHome ? config.showLgHome : t.key === MISC.system ? config.showSystem : t.key === MISC.saver ? config.showSaverApp && config.screensaver : !config.hideSettings || tileBack))),
+		[orderedTiles, config.showLgHome, config.showSystem, config.showSaverApp, config.screensaver, config.hideSettings, tileBack, config.language, langTick]
 	);
 
 	const timeFormat: TimeFormat = config.clockFormat === 'tv' ? tvFormat : config.clockFormat;
@@ -1102,6 +1104,7 @@ export function App () {
 	// ----- actions -----
 	const onActivate = useCallback((item: TileModel) => {
 		if (item.key === MISC.settings) { setHidePractice(false); setScreen('settings'); return; }
+		if (item.key === MISC.saver) { setScreen('saverapp'); return; }
 		if (item.key === MISC.system) { launchSystemSettings().catch(() => showToast(tt('app.couldnTOpenThe'), 'error')); return; }
 		if (item.key === MISC.lgHome) {
 			// webOS 3 has no LG Home app: when the launch is refused, the Home key is sent to the TV instead (lghome.ts; needs root)
@@ -1453,7 +1456,7 @@ export function App () {
 
 	// Hold OK on an app or input: its Move / Hide (/ Uninstall) menu. LG Home and Settings have no menu.
 	const onLongPress = useCallback((item: TileModel) => {
-		if (item.key === MISC.lgHome || item.key === MISC.settings || item.key === MISC.system) return;
+		if (item.key === MISC.lgHome || item.key === MISC.settings || item.key === MISC.system || item.key === MISC.saver) return;
 		const app = apps.find((a) => a.id === item.key) || null;
 		setMenu({key: item.key, title: item.label, app});
 	}, [apps]);
@@ -1604,7 +1607,8 @@ export function App () {
 			{recents && screen === 'home' && <Recents icons={recentIcons} edits={config.appEdits} inputs={allInputs} sourceEdits={config.sourceEdits} width={config.recentsW} height={config.recentsH} onClose={closeRecents} onOpen={noteOpened} onToast={showToast} />}
 			{/* Settings stays mounted under the picker so it keeps its tab. */}
 			{screen === 'settings' && settingsTab === TAB.clock && appearance.clock.show && <WidgetPreview now={previewNow} format={timeFormat} config={appearance.clock} weather={weatherLine} />}
-			{(screen !== 'home') && <Settings tabs={tabs} active={screen === 'settings' && !notice && !menu} onToggle={onToggle} onRecent={onRecent} onOption={onOption} onRefresh={onRefresh} favourites={config.favourites} onFavourite={onFavourite} onUninstallPick={onUninstallPick} onEdit={(key) => { setEditKey(key); setScreen('source'); }} onAdjust={onAdjust} onTab={onTab} onCollapse={onCollapse} onClose={() => { onCollapse(); setScreen('home'); }} about={aboutText(versions, rootState(), lastFailure())} homePreview={() => <HomePreview items={homeItems} favourites={config.favourites} appearance={appearance} timeFormat={timeFormat} weather={weatherLine} wallpaperRev={`${JSON.stringify(config.wallpaper)}|${config.background}|${config.wallpaperOpacity}|${config.fadeStrength}|${config.fadeHeight}`} />} />}
+			{screen === 'saverapp' && <SaverApp interval={config.screensaverInterval} powerOff={config.screensaverPowerOff} onInterval={(v) => patchConfig({screensaverInterval: v})} onPowerOff={(v) => patchConfig({screensaverPowerOff: v})} onClose={() => setScreen('home')} paused={!!notice} />}
+			{(screen !== 'home' && screen !== 'saverapp') && <Settings tabs={tabs} active={screen === 'settings' && !notice && !menu} onToggle={onToggle} onRecent={onRecent} onOption={onOption} onRefresh={onRefresh} favourites={config.favourites} onFavourite={onFavourite} onUninstallPick={onUninstallPick} onEdit={(key) => { setEditKey(key); setScreen('source'); }} onAdjust={onAdjust} onTab={onTab} onCollapse={onCollapse} onClose={() => { onCollapse(); setScreen('home'); }} about={aboutText(versions, rootState(), lastFailure())} homePreview={() => <HomePreview items={homeItems} favourites={config.favourites} appearance={appearance} timeFormat={timeFormat} weather={weatherLine} wallpaperRev={`${JSON.stringify(config.wallpaper)}|${config.background}|${config.wallpaperOpacity}|${config.fadeStrength}|${config.fadeHeight}`} />} />}
 			{menu && <AppMenu title={menu.title} hideDetail={menu.app ? tt('app.youCanAddItBack') : tt('app.youCanAddItBack2')} showUninstall={!!menu.app} blockedReason={menuBlocked} isFavourite={config.favourites.indexOf(menu.key) !== -1} onFavourite={() => { onFavourite('', menu.key); setMenu(null); }} onReorder={config.orderByRecent || menu.key === MISC.lgHome || menu.key === MISC.settings || menu.key === MISC.system ? undefined : () => startMoveMode(menu.key)} onHide={() => hideTile(menu)} onUninstall={() => { if (menu.app) removeApp(menu.app); }} startAtConfirm={!!menu.direct} settingsDetail={menu.direct ? undefined : hidePractice ? tt('appmenu.settingsPractice') : config.hideSettings && !tileBack ? tt('appmenu.settingsDetail') : undefined} onSettings={onMenuSettings} onClose={() => setMenu(null)} />}
 			{screen === 'source' && (editedSource || editedApp) && (
 				<SourceEditor

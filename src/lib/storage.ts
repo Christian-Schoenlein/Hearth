@@ -259,6 +259,8 @@ export interface UserConfig {
 	/** inputs with nothing plugged in are greyed out and HDMI-CEC device names are shown (P62, PR #16) */
 	inputStatus: boolean;
 	showSystem: boolean;
+	/** the Screen saver app tile at the end of the row (fork: browse and hide the saver's pictures, set the daily mix; needs the screen saver on) */
+	showSaverApp: boolean;
 	/** R10: the Hearth Settings tile is hidden (hold OK on an app opens Settings; Down x5 on Home shows the tile until the next start) */
 	hideSettings: boolean;
 	/** the home row shows the most opened tiles first (Settings -> Apps / Sources, "Most used"; before 2.1.6 "Order by last opened", same saved key); the manual order stays saved */
@@ -395,6 +397,7 @@ export const DEFAULT_CONFIG: UserConfig = {
 	showLgHome: false,                // P41c: hidden on a fresh install (saved settings keep theirs)
 	inputStatus: true,
 	showSystem: false,                // P41c: same
+	showSaverApp: true,
 	hideSettings: false,              // R10: additive, off
 	orderByRecent: false,
 	remap: DEFAULT_REMAP,
@@ -571,6 +574,7 @@ export function loadConfig (): UserConfig {
 			showLgHome: parsed.showLgHome !== false,
 			inputStatus: parsed.inputStatus !== false,   // P41c: a saved setting without the field (updaters) reads as On; an explicit Off stays
 			showSystem: parsed.showSystem !== false,
+			showSaverApp: parsed.showSaverApp !== false,
 			hideSettings: parsed.hideSettings === true,
 			orderByRecent: parsed.orderByRecent === true,
 			remap: cleanRemap(parsed.remap),

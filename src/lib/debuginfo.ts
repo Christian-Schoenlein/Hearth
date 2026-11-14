@@ -51,7 +51,7 @@ export function debugPages (s: DebugSnapshot): DebugPage[] {
 		`Wallpaper ${c.wallpaper.mode}${c.wallpaper.path ? ' ' + c.wallpaper.path : ''}`,
 		`Close LG Home ${c.closeHome ? 'on' : 'switched off (it kept coming back)'}, helper ${yn(c.replaceHome)}`,
 		`Hidden apps ${c.hiddenIds ? c.hiddenIds.length : '?'}, sources shown ${c.sourceIds.length}, edited sources ${Object.keys(c.sourceEdits).length}`,
-		`LG Home tile ${yn(c.showLgHome)}, System Settings tile ${yn(c.showSystem)}`
+		`LG Home tile ${yn(c.showLgHome)}, System Settings tile ${yn(c.showSystem)}, Screen saver tile ${yn(c.showSaverApp)}`
 	].filter((l, i) => l !== '' || i === 5);
 	const st = s.stats;
 	state.push('');
