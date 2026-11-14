@@ -958,7 +958,7 @@ html, body {
 	text-shadow: 0 2px 18px rgba(0, 0, 0, 0.25); z-index: 1;
 }
 .scenes__wx, .scenes__day { display: block; }   /* the weather on its own line above the day, in the same type */
-.scenes__wx { margin-bottom: 4px; }
+.scenes__wx { margin-bottom: 4px; opacity: 0.7; }   /* a step quieter than the date */
 .scenes__date svg { width: 30px; height: 30px; vertical-align: -5px; margin: 0 8px 0 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .scenes--show-night .scenes__date { color: rgba(255, 232, 238, 0.92); }
 .scenes--show-golden .scenes__date { top: 66px; }
