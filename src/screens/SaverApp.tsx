@@ -5,8 +5,8 @@
 
 import {useEffect, useRef, useState} from 'preact/hooks';
 import {useKeys, clamp, type NavKey} from '../hooks/useKeys';
-import {COUNT_STEPS, loadItems, loadState, newMix, onServer, saveCounts, saverServer, setHidden, stepValue,
-	type SaverCounts, type SaverItem, type SaverKind, type SaverState} from '../lib/saverapp';
+import {COUNT_STEPS, SAVER_DELAY_VALUES, SAVER_SHOW_VALUES, ensurePicturesDir, getSaverDelay, setSaverDelay, showOf, sourceFor, loadItems, loadState, newMix, onServer, saveCounts, saverServer, setHidden, stepValue,
+	type SaverCounts, type SaverItem, type SaverKind, type SaverShow, type SaverState} from '../lib/saverapp';
 import {SAVER_INTERVAL_VALUES, SAVER_POWEROFF_VALUES, powerOffText} from '../lib/saverconfig';
 import {t as tt} from '../i18n';
 
@@ -16,6 +16,9 @@ const COLS = 4;
 const ROWS_SHOWN = 4;          // the grid draws this many rows around the focus (the TV never holds all 386 pictures at once)
 
 interface Props {
+	/** the folder the saver plays (Hearth's screensaverSource): says what it shows */
+	source: string;
+	onSource: (source: string) => void;
 	/** seconds a picture stays (Hearth's own saver setting) */
 	interval: number;
 	/** seconds of saver before the TV turns off (0 = never) */
@@ -37,17 +40,27 @@ function nextIn (values: readonly number[], value: number, dir: 1 | -1): number 
 	return at === -1 ? stepValue(values, value, dir) : values[clamp(at + dir, 0, values.length - 1)];
 }
 
-export function SaverApp ({interval, powerOff, onInterval, onPowerOff, onClose, paused}: Props) {
+const SHOW_KEYS = {all: 'saverapp.show.all', aerials: 'saverapp.show.aerials', pictures: 'saverapp.show.pictures', other: 'saverapp.show.other'} as const;
+
+export function SaverApp ({source, onSource, interval, powerOff, onInterval, onPowerOff, onClose, paused}: Props) {
 	const [items, setItems] = useState<SaverItem[] | null>(null);
 	const [state, setState] = useState<SaverState | null>(null);
 	const [failed, setFailed] = useState(false);
-	const [section, setSection] = useState<Section>('today');
-	const [zone, setZone] = useState<'menu' | 'grid'>('menu');
-	const [at, setAt] = useState(0);                    // focused picture, or focused settings row
+	const [section, drawSection] = useState<Section>('today');
+	const [zone, drawZone] = useState<'menu' | 'grid'>('menu');
+	const [at, drawAt] = useState(0);                   // focused picture, or focused settings row
+	// the key handlers read the newest position from here: a quick second press can come before the redraw
+	const nav = useRef<{section: Section; zone: 'menu' | 'grid'; at: number}>({section: 'today', zone: 'menu', at: 0});
+	const setSection = (v: Section) => { nav.current.section = v; drawSection(v); };
+	const setZone = (v: 'menu' | 'grid') => { nav.current.zone = v; drawZone(v); };
+	const setAt = (v: number) => { nav.current.at = v; drawAt(v); };
+	const openedAt = useRef(Date.now());              // the OK that opened the app must not also act in it
 	const [viewer, setViewer] = useState<number | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [note, setNote] = useState('');
 	const wasRotating = useRef(false);
+	const [delay, setDelay] = useState<number | null>(null);          // minutes before the saver starts (the TV's own setting)
+	useEffect(() => { getSaverDelay().then((m) => setDelay(m)); }, []);
 
 	const refresh = () => loadState().then((s) => { setState(s); setFailed(false); return s; });
 	useEffect(() => {
@@ -78,7 +91,7 @@ export function SaverApp ({interval, powerOff, onInterval, onPowerOff, onClose, 
 		: section === 'hidden' ? items.filter(hiddenOf)
 		: section === 'settings' ? [] : items.filter((i) => i.kind === section);
 	const counts: SaverCounts = state ? state.counts : {aerials: 4, art: 15, photos: 15};
-	const SETTING_ROWS = 6;
+	const SETTING_ROWS = 8;
 	const rows = section === 'settings' ? SETTING_ROWS : list.length;
 	const pos = clamp(at, 0, Math.max(0, rows - 1));
 
@@ -105,21 +118,52 @@ export function SaverApp ({interval, powerOff, onInterval, onPowerOff, onClose, 
 		newMix().then(() => window.setTimeout(() => { refresh().catch(() => undefined); }, 1500), () => setFailed(true));
 	};
 
+	const show = showOf(source);
+	const changeShow = (dir: 1 | -1) => {
+		const at = SAVER_SHOW_VALUES.indexOf(show as SaverShow);
+		const next = SAVER_SHOW_VALUES[at === -1 ? 0 : clamp(at + dir, 0, SAVER_SHOW_VALUES.length - 1)];
+		if (next === show) return;
+		// "only pictures" plays a folder of links to the mix's art and photos: made (or repaired) first
+		(next === 'pictures' ? ensurePicturesDir() : Promise.resolve(true)).then((ok) => {
+			if (ok) onSource(sourceFor(next)); else setNote(tt('saverapp.showFailed'));
+		});
+	};
+	const changeDelay = (dir: 1 | -1) => {
+		if (delay === null) return;
+		const next = nextIn(SAVER_DELAY_VALUES, delay, dir);
+		if (next === delay) return;
+		const before = delay;
+		setDelay(next);
+		setSaverDelay(next).then((ok) => { if (!ok) { setDelay(before); setNote(tt('saverapp.delayFailed')); } });
+	};
+
+	// the rows of the Settings section: ◀ ▶ changes a value, OK runs an action
+	const settingRows: {id: string; label: string; value: string; detail: string; change?: (dir: 1 | -1) => void; run?: () => void}[] = [
+		{id: 'delay', label: tt('saverapp.set.delay'), value: delay === null ? '…' : tt('saverconfig.minutes', {v: delay}), detail: tt('saverapp.set.delayDetail'), change: changeDelay},
+		{id: 'show', label: tt('saverapp.set.show'), value: tt(SHOW_KEYS[show]), detail: tt(show === 'aerials' && counts.aerials === 0 ? 'saverapp.set.showEmpty' : show === 'pictures' && counts.art + counts.photos === 0 ? 'saverapp.set.showEmpty' : 'saverapp.set.showDetail'), change: changeShow},
+		{id: 'aerials', label: tt('saverapp.set.aerials'), value: String(counts.aerials), detail: tt('saverapp.set.aerialsDetail'), change: (d) => changeCount('aerials', d)},
+		{id: 'art', label: tt('saverapp.set.art'), value: String(counts.art), detail: tt('saverapp.set.artDetail'), change: (d) => changeCount('art', d)},
+		{id: 'photos', label: tt('saverapp.set.photos'), value: String(counts.photos), detail: tt('saverapp.set.photosDetail'), change: (d) => changeCount('photos', d)},
+		{id: 'interval', label: tt('saverapp.set.interval'), value: intervalText(interval), detail: tt('saverapp.set.intervalDetail'), change: (d) => onInterval(nextIn(SAVER_INTERVAL_VALUES, interval, d))},
+		{id: 'powerOff', label: tt('saverapp.set.powerOff'), value: powerOffText(powerOff), detail: tt('saverapp.set.powerOffDetail'), change: (d) => onPowerOff(nextIn(SAVER_POWEROFF_VALUES, powerOff, d))},
+		{id: 'newMix', label: tt('saverapp.set.newMix'), value: state && state.rotating ? tt('saverapp.mixing') : '', detail: tt('saverapp.set.newMixDetail'), run: startMix}
+	];
+
 	const settingsKey = (key: NavKey) => {
-		const dir: 1 | -1 = key === 'right' ? 1 : -1;
+		const pos = clamp(nav.current.at, 0, SETTING_ROWS - 1);
+		const row = settingRows[pos];
 		if (key === 'up') { if (pos === 0) setZone('menu'); else setAt(pos - 1); return; }
 		if (key === 'down') { setAt(Math.min(SETTING_ROWS - 1, pos + 1)); return; }
-		if (key === 'enter') { if (pos === 5) startMix(); return; }
+		if (key === 'enter') { if (row.run) row.run(); return; }
 		if (key !== 'left' && key !== 'right') return;
-		if (pos === 0) changeCount('aerials', dir);
-		else if (pos === 1) changeCount('art', dir);
-		else if (pos === 2) changeCount('photos', dir);
-		else if (pos === 3) onInterval(nextIn(SAVER_INTERVAL_VALUES, interval, dir));
-		else if (pos === 4) onPowerOff(nextIn(SAVER_POWEROFF_VALUES, powerOff, dir));
+		if (row.change) row.change(key === 'right' ? 1 : -1);
 		else if (key === 'left') setZone('menu');
 	};
 
 	const handleKey = (key: NavKey): boolean => {
+		if (Date.now() - openedAt.current < 500) return true;
+		const {section, zone} = nav.current;
+		const pos = clamp(nav.current.at, 0, Math.max(0, rows - 1));
 		if (viewer !== null) {
 			const n = list.length;
 			if (key === 'back') setViewer(null);
@@ -157,15 +201,6 @@ export function SaverApp ({interval, powerOff, onInterval, onPowerOff, onClose, 
 	const subOf = (i: SaverItem): string => i.sub || i.credit || '';
 	const kindName = (k: SaverKind): string => tt(ONE_KEYS[k]);
 
-	const settingRows: {label: string; value: string; detail: string}[] = [
-		{label: tt('saverapp.set.aerials'), value: String(counts.aerials), detail: tt('saverapp.set.aerialsDetail')},
-		{label: tt('saverapp.set.art'), value: String(counts.art), detail: tt('saverapp.set.artDetail')},
-		{label: tt('saverapp.set.photos'), value: String(counts.photos), detail: tt('saverapp.set.photosDetail')},
-		{label: tt('saverapp.set.interval'), value: intervalText(interval), detail: tt('saverapp.set.intervalDetail')},
-		{label: tt('saverapp.set.powerOff'), value: powerOffText(powerOff), detail: tt('saverapp.set.powerOffDetail')},
-		{label: tt('saverapp.set.newMix'), value: state && state.rotating ? tt('saverapp.mixing') : '', detail: tt('saverapp.set.newMixDetail')}
-	];
-
 	const viewed = viewer !== null ? list[viewer] : null;
 	return (
 		<div class="screen sva">
@@ -190,9 +225,9 @@ export function SaverApp ({interval, powerOff, onInterval, onPowerOff, onClose, 
 							{settingRows.map((r, i) => {
 								const focused = zone === 'grid' && i === pos;
 								return (
-									<div key={r.label} class={`sva__row${focused ? ' sva__row--focused' : ''}${i === 5 ? ' sva__row--action' : ''}`}>
+									<div key={r.id} class={`sva__row${focused ? ' sva__row--focused' : ''}${r.run ? ' sva__row--action' : ''}`}>
 										<div class="sva__rowtext"><div class="sva__rowlabel">{r.label}</div><div class="sva__rowdetail">{r.detail}</div></div>
-										{i < 5 ? <div class="sva__value">{focused && <span class="sva__arrow">‹</span>}{r.value}{focused && <span class="sva__arrow">›</span>}</div>
+										{r.change ? <div class="sva__value">{focused && <span class="sva__arrow">‹</span>}{r.value}{focused && <span class="sva__arrow">›</span>}</div>
 											: r.value && <div class="sva__value sva__value--busy">{r.value}</div>}
 									</div>
 								);

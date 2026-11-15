@@ -2,6 +2,9 @@
 // M1: gallery/server.py). It lists every aerial, painting and photo, says which are on the TV today, hides the ones
 // not wanted, and keeps how many of each the mix gets. Plain XMLHttpRequest (the web view of older TVs has no fetch).
 
+import {exec} from './apps';
+import {isWebOS} from './luna';
+
 /** The Mac's address on the home network; localStorage 'hearth-saver-server' overrides it (testing, another Mac). */
 export const SAVER_SERVER_DEFAULT = 'http://MacBookPro.fritz.box:8875';
 
@@ -76,3 +79,55 @@ export const newMix = (): Promise<{rotating: boolean}> => request('POST', '/api/
 
 /** A picture's address on the Mac (the lists hold paths relative to the server). */
 export const onServer = (path: string): string => (/^https?:/.test(path) ? path : saverServer() + '/' + path.replace(/^\/+/, ''));
+
+// ----- what the saver shows: everything, only the aerials, or only the pictures (art + photos) -----
+// The saver plays one folder (Hearth's screensaverSource, found with `find -L`). "Only pictures" is a folder of two links,
+// to the art and photos folders of the daily mix, so the choice works at once and the daily mix itself never changes.
+
+export const SAVER_MIX_DIR = '/media/developer/screensavers';
+export const SAVER_PICTURES_DIR = '/media/developer/screensavers-pictures';
+export type SaverShow = 'all' | 'aerials' | 'pictures';
+export const SAVER_SHOW_VALUES: readonly SaverShow[] = ['all', 'aerials', 'pictures'];
+
+export function showOf (source: string): SaverShow | 'other' {
+	const s = source.replace(/\/+$/, '');
+	return s === SAVER_MIX_DIR ? 'all' : s === SAVER_MIX_DIR + '/aerials' ? 'aerials' : s === SAVER_PICTURES_DIR ? 'pictures' : 'other';
+}
+
+export function sourceFor (show: SaverShow): string {
+	return show === 'aerials' ? SAVER_MIX_DIR + '/aerials' : show === 'pictures' ? SAVER_PICTURES_DIR : SAVER_MIX_DIR;
+}
+
+/** Makes (or repairs) the "only pictures" folder: links to the mix's art and photos folders. */
+export const PICTURES_DIR_COMMAND = `mkdir -p '${SAVER_PICTURES_DIR}' && ln -sfn ../screensavers/art '${SAVER_PICTURES_DIR}/art' && ln -sfn ../screensavers/photos '${SAVER_PICTURES_DIR}/photos' && echo ok`;
+
+export function ensurePicturesDir (): Promise<boolean> {
+	if (!isWebOS()) return Promise.resolve(false);
+	return exec(PICTURES_DIR_COMMAND, 8000).then((out) => /ok/.test(out), () => false);
+}
+
+// ----- how long the TV waits before the saver starts: the TV's own setting (option.screenSaverTimer, minutes) -----
+// The TV only accepts these four values (getSystemSettingDesc); it needs root, like the other system settings.
+
+export const SAVER_DELAY_VALUES: readonly number[] = [3, 10, 20, 30];
+const DELAY_GET = `luna-send -n 1 -f luna://com.webos.settingsservice/getSystemSettings '{"category":"option","keys":["screenSaverTimer"]}'`;
+
+export function delayCommand (minutes: number): string {
+	if (SAVER_DELAY_VALUES.indexOf(minutes) === -1) throw new Error('not a screen saver delay');
+	return `luna-send -n 1 -f luna://com.webos.settingsservice/setSystemSettings '{"category":"option","settings":{"screenSaverTimer":"${minutes}","checkChangedScreenSaverTimerByUser":"user"}}'`;
+}
+
+export function parseDelay (out: string): number | null {
+	const m = /"screenSaverTimer"\s*:\s*"?(\d+)/.exec(out);
+	return m ? Number(m[1]) : null;
+}
+
+export function getSaverDelay (): Promise<number | null> {
+	if (!isWebOS()) return Promise.resolve(null);
+	return exec(DELAY_GET, 6000).then(parseDelay, () => null);
+}
+
+export function setSaverDelay (minutes: number): Promise<boolean> {
+	if (!isWebOS()) return Promise.resolve(false);
+	return exec(delayCommand(minutes), 6000).then((out) => /"returnValue"\s*:\s*true/.test(out), () => false);
+}
