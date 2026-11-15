@@ -22,6 +22,27 @@ const SCENES: Record<SceneId, SceneDef> = {
 const hi = (): boolean => (window.devicePixelRatio || 1) > 1.2;
 const pic = (id: string, ext: string, twoX: boolean): string => `scenes/scene-${id}${twoX && hi() ? '@2x' : ''}${ext}`;
 
+// Fast start: the page renders at 4K (pixel ratio 2), and getting the 4K photo and cut-out ready for the screen took the C5
+// about 3 s at a cold start (trace 15.11.2026: two image decodes of 1.5 s and 0.4 s, the first frame waited 2.6 s for them),
+// all of it black. So a scene first shows its 1080p pictures (a few hundred ms), and the 4K ones are fetched and decoded
+// aside, then swapped in. Remembered for the page's life, so a scene that was sharp once stays sharp.
+const sharp: Partial<Record<SceneId, boolean>> = {};
+const SHARP_AFTER_MS = 2500;      // the first screen and its first key presses come first
+
+function decoded (src: string): Promise<void> {
+	return new Promise<void>((resolve, reject) => {
+		const img = new Image();
+		img.onload = () => { if (img.decode) img.decode().then(() => resolve(), () => resolve()); else resolve(); };
+		img.onerror = () => reject(new Error(src));
+		img.src = src;
+	});
+}
+
+function makeSharp (id: SceneId): Promise<void> {
+	const s = SCENES[id];
+	return Promise.all([decoded(pic(id, '.jpg', true)), s.fg ? decoded(pic(`${id}-fg`, '.webp', true)) : Promise.resolve()]).then(() => { sharp[id] = true; });
+}
+
 /** The sun's height over the horizon in degrees, and the hour angle (negative before solar noon). */
 function solar (lat: number, lon: number, d: Date): {alt: number; hourAngle: number} {
 	const start = Date.UTC(d.getUTCFullYear(), 0, 0);
@@ -81,15 +102,16 @@ function GlassClock ({text, scene, under}: {text: string; scene: SceneId; under?
 	);
 }
 
-function Scene ({id, on, text}: {id: SceneId; on: boolean; text: string}) {
+function Scene ({id, on, fade, text}: {id: SceneId; on: boolean; fade: boolean; text: string}) {
 	const s = SCENES[id];
+	const twoX = !!sharp[id];
 	return (
-		<div class={`scene scene--${id}${on ? ' scene--on' : ''}`}>
-			<img class="scene__bg" src={pic(id, '.jpg', true)} alt="" />
+		<div class={`scene scene--${id}${on ? ' scene--on' : ''}${on && fade ? ' scene--fade' : ''}`}>
+			<img class="scene__bg" src={pic(id, '.jpg', twoX)} alt="" />
 			<div class="scene__shade" />
 			<GlassClock text={text} scene={id} />
 			{s.water && <GlassClock text={text} scene={id} under />}
-			{s.fg && <img class="scene__fg" src={pic(`${id}-fg`, '.webp', true)} alt="" />}
+			{s.fg && <img class="scene__fg" src={pic(`${id}-fg`, '.webp', twoX)} alt="" />}
 		</div>
 	);
 }
@@ -113,13 +135,23 @@ export function Scenes ({now, format, geo, weather}: Props) {
 		const t = window.setTimeout(() => setShown((v) => ({cur: v.cur, prev: null})), 1800);
 		return () => window.clearTimeout(t);
 	}, [want]);                                                                 // eslint-disable-line react-hooks/exhaustive-deps
+	// the 4K pictures of the scene on screen, once it is up (see makeSharp)
+	const [, setSharpTick] = useState(0);
+	useEffect(() => {
+		const id = shown.cur;
+		if (!hi() || sharp[id]) return undefined;
+		let live = true;
+		const t = window.setTimeout(() => { makeSharp(id).then(() => { if (live) setSharpTick((n) => n + 1); }, () => { /* stays 1080p */ }); }, SHARP_AFTER_MS);
+		return () => { live = false; window.clearTimeout(t); };
+	}, [shown.cur]);
 	const {time} = timeParts(now, format);
 	const h = now.getHours();
 	const night = h >= 21 || h < 6;
 	const ids: SceneId[] = shown.prev ? [shown.prev, shown.cur] : [shown.cur];
 	return (
 		<div class={`scenes${night ? ' scenes--late' : ''} scenes--show-${shown.cur}`}>
-			{ids.map((id) => <Scene key={id} id={id} on={id === shown.cur} text={time} />)}
+			{/* fades in only when it replaces another scene: at the first screen it is there at once */}
+			{ids.map((id) => <Scene key={id} id={id} on={id === shown.cur} fade={!!shown.prev} text={time} />)}
 			<div class="scenes__date">
 				{weather && <span class="scenes__wx"><WeatherGlyph icon={weather.icon} />{weather.main}</span>}
 				<span class="scenes__day">{dayName(now)} {dateText(now)}</span>

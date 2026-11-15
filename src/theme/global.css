@@ -903,7 +903,7 @@ html, body {
 .scenes { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none; overflow: hidden; background: #000; }
 .scenes::after { content: ''; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.5) 100%); }
 .scene { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
-.scene--on { -webkit-animation: hearth-scene-in 1600ms ease-in-out; animation: hearth-scene-in 1600ms ease-in-out; }
+.scene--fade { -webkit-animation: hearth-scene-in 1600ms ease-in-out; animation: hearth-scene-in 1600ms ease-in-out; }
 @-webkit-keyframes hearth-scene-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes hearth-scene-in { from { opacity: 0; } to { opacity: 1; } }
 .scene__bg, .scene__fg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
